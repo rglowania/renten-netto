@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brutto-Netto-Rechner für Rentner</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --surface2: #eef0f4;
+  --border: #d5d9e2; --border-strong: #b0b8c8;
+  --text: #1a1f2e; --text-mid: #424b60; --text-light: #7a8499;
+  --accent: #1e3a7a; --accent-light: #e8edf6;
+  --accent2: #2d4fa0;
+  --gold: #2d6bb5; --gold-light: #dce8f5;
+  --danger: #c0392b;
+  --shadow: 0 1px 3px rgba(26,50,99,.07), 0 4px 16px rgba(26,50,99,.05);
+  --shadow-lg: 0 8px 32px rgba(26,50,99,.13);
+  --radius: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
+header{background:var(--accent);color:white;padding:22px 40px 20px;position:relative;overflow:hidden;border-bottom:3px solid #8a9ab5}
+header::before{content:'';position:absolute;top:0;right:0;width:300px;height:100%;background:linear-gradient(135deg,transparent 60%,rgba(255,255,255,.04));pointer-events:none}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(255,255,255,.1)}
+.header-inner{display:flex;align-items:center;gap:24px;position:relative}
+.header-logo-wrap{flex-shrink:0}
+.header-logo-img{height:56px;width:auto;display:block;background:white;border-radius:6px;padding:6px 10px}
+.header-titles{flex:1}
+header h1{font-family:'Source Sans 3','Segoe UI',sans-serif;font-size:22px;font-weight:700;position:relative;letter-spacing:-.3px}
+header p{color:rgba(255,255,255,.65);font-size:12.5px;margin-top:3px;font-weight:400;position:relative;letter-spacing:.1px}
+.header-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.header-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,255,255,.25);letter-spacing:.5px;text-transform:uppercase}
+.layout{display:grid;grid-template-columns:1fr 375px;gap:20px;max-width:1200px;margin:22px auto;padding:0 20px 40px}
+.panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;border:1px solid var(--border)}
+.panel-title{font-size:13px;font-weight:700;padding:12px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface2);text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid)}
+.panel-title .icon{width:24px;height:24px;border-radius:5px;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.panel-body{padding:15px 18px}
+.field{margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--text-mid);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input[type=number],input[type=text],select{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:5px;font-family:inherit;font-size:13.5px;color:var(--text);background:white;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,50,99,.1)}
+.wrap{position:relative}
+.wrap input{padding-right:10px}
+.wrap:has(.sfx) input{padding-right:34px}
+.wrap .sfx{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-light);pointer-events:none}
+/* Grunddaten */
+.basis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+/* Anzahl */
+.anzahl-row{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.anzahl-row label{font-size:13px;font-weight:600;color:var(--text-mid);white-space:nowrap}
+.anzahl-row input{width:70px}
+.btn{padding:7px 16px;background:var(--accent);color:white;border:none;border-radius:5px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .15s;letter-spacing:.2px}
+.btn:hover{background:var(--accent2)}
+/* Rente */
+.rente-entry{background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;padding:13px;margin:0 18px 12px;border-left:3px solid var(--accent)}
+.rente-head{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.rente-nr{width:20px;height:20px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.rente-typ{flex:1;font-size:13px;font-weight:600}
+/* Betrag Sync */
+.betrag-row{display:grid;grid-template-columns:1fr 24px 1fr;align-items:end;gap:5px}
+.betrag-row .arrow{color:var(--text-light);font-size:14px;text-align:center;padding-bottom:7px}
+/* Toggle */
+.tog-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.tog-row>label:first-child{font-size:12.5px;color:var(--text-mid);font-weight:500;flex:1;margin:0;text-transform:none;letter-spacing:0}
+.tog{position:relative;width:36px;height:19px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:var(--border-strong);border-radius:10px;cursor:pointer;transition:.2s}
+.sl::before{content:'';position:absolute;width:13px;height:13px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog input:checked+.sl{background:var(--accent)}
+.tog input:checked+.sl::before{transform:translateX(17px)}
+/* KV tabs */
+.kv-tabs{display:flex;gap:2px;background:var(--surface2);padding:3px;border-radius:6px;margin-bottom:12px;border:1px solid var(--border)}
+.kv-tab{flex:1;padding:5px;border:none;border-radius:4px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-light);transition:all .15s;letter-spacing:.2px}
+.kv-tab.active{background:var(--accent);color:white;box-shadow:0 1px 4px rgba(26,50,99,.25)}
+/* KK Suche */
+.kk-wrap{position:relative;margin-bottom:9px}
+.kk-sel{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--accent-light);border:1.5px solid var(--accent);border-radius:5px;margin-bottom:8px;font-size:13px}
+.kk-sel .kname{font-weight:700;color:var(--accent);flex:1}
+.kk-sel .ksatz{color:var(--accent);font-weight:700;font-size:12px}
+.kk-sel .kclr{cursor:pointer;color:var(--text-light);font-size:16px;line-height:1}
+.kk-dd{position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);z-index:100;max-height:200px;overflow-y:auto;display:none}
+.kk-it{padding:7px 11px;cursor:pointer;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);transition:background .1s}
+.kk-it:last-child{border-bottom:none}
+.kk-it:hover{background:var(--accent-light)}
+.kk-it .kn{font-weight:600;color:var(--text)}
+.kk-it .ks{color:var(--accent);font-weight:700;font-size:11.5px}
+/* Sonstige Tabs */
+.s-tabs{display:flex;gap:2px;background:var(--surface2);padding:2px;border-radius:5px;margin:7px 0 10px;border:1px solid var(--border)}
+.s-tab{flex:1;padding:4px 3px;border:none;border-radius:4px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-light);transition:all .15s;text-align:center;letter-spacing:.1px}
+.s-tab.active{background:var(--accent);color:white;box-shadow:0 1px 3px rgba(26,50,99,.2)}
+/* Hinweis box */
+.bst-box{font-size:11.5px;padding:6px 9px;background:var(--accent-light);border-radius:5px;border-left:3px solid var(--accent);color:var(--accent);margin-top:7px;font-weight:500}
+.cur-toggle{display:flex;gap:2px;background:var(--surface2);padding:2px;border-radius:5px;margin-bottom:7px;width:fit-content;border:1px solid var(--border)}
+.cur-btn{padding:4px 10px;border:none;border-radius:4px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-light);transition:all .15s}
+.cur-btn.active{background:var(--accent);color:white;box-shadow:0 1px 3px rgba(26,50,99,.2)}
+.cur-btn.active.chf-active{background:#c0392b;color:white;box-shadow:0 1px 4px rgba(192,57,43,.35)}
+.chf-kurs-info{font-size:11px;padding:5px 8px;background:#dce8f5;border:1px solid #a0bce0;border-radius:5px;color:#1a3263;margin-top:5px;line-height:1.4;font-weight:500}
+/* Ergebnis */
+.erg-panel{background:var(--accent);border-radius:var(--radius);color:white;overflow:hidden;box-shadow:var(--shadow-lg);position:sticky;top:20px;border:1px solid rgba(255,255,255,.08)}
+.erg-head{padding:14px 18px 12px;border-bottom:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.15)}
+.erg-head h2{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.erg-head p{font-size:11px;opacity:.55;margin-top:2px}
+.erg-body{padding:15px 18px}
+.res-blk{background:rgba(255,255,255,.07);border-radius:6px;padding:12px;text-align:center;margin-bottom:11px;border:1px solid rgba(255,255,255,.08)}
+.res-blk .lb{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;opacity:.55;margin-bottom:2px;font-weight:700}
+.res-blk .am{font-size:26px;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.res-blk .sb{font-size:11px;opacity:.55;margin-top:1px}
+.res-blk.netto .am{color:#7dd4b0;font-size:30px}
+.res-blk.netto .sb{color:rgba(125,212,176,.7);font-size:14px}
+.abz-list{margin-bottom:11px}
+.abz{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;gap:6px}
+.abz:last-child{border-bottom:none}
+.abz .n{opacity:.8;flex:1}
+.abz .v{font-weight:700;font-variant-numeric:tabular-nums;color:#a8d4f5;white-space:nowrap}
+.abz.sub{padding-left:10px;font-size:11px;opacity:.75}
+.abz.sub .v{color:rgba(168,212,245,.7);font-weight:600}
+hr.dv{border:none;border-top:1px solid rgba(255,255,255,.15);margin:7px 0}
+.abz.detail{padding-left:10px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.06)}
+.abz.detail .n{opacity:.7;font-style:normal}
+.abz.detail .v{color:rgba(168,212,245,.7);font-weight:500}
+.abz.detail .vv{color:#a8d4f5;font-weight:700}
+.erg-info{padding:8px 10px;background:rgba(255,255,255,.06);border-radius:5px;font-size:11px;opacity:.85;line-height:1.55;margin-top:8px;border:1px solid rgba(255,255,255,.08)}
+.erg-info strong{color:#a8d4f5}
+.calc-btn{width:100%;padding:10px;background:var(--gold);color:white;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:11px;transition:background .15s;letter-spacing:.3px;text-transform:uppercase}
+.calc-btn:hover{background:#1e3a7a}
+
+@media(max-width:860px){.layout{grid-template-columns:1fr}.erg-panel{position:static}.basis-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="header-logo-wrap">
+      <img src="https://www.steuerberater-weilamrhein.com/wp-content/uploads/2021/11/meier-kroehnke-partner-steuerberatung-weil-am-rhein-logo-02.png"
+           alt="Meier + Kröhnke Steuerberatung"
+           class="header-logo-img"
+           onerror="this.style.display='none';document.getElementById('mk-fallback').style.display='flex'">
+      <div id="mk-fallback" class="mk-logo-fallback" style="display:none">
+        <div class="mk-monogram">M+K</div>
+        <div class="mk-text"><strong>Meier + Kröhnke</strong><br><span>Steuerberatung · Weil am Rhein</span></div>
+      </div>
+    </div>
+    <div class="header-titles">
+      <h1>Brutto-Netto-Rechner für Rentner</h1>
+      <p>Alle Rentenarten · Deutsche Einkommensteuer · Stand 2025/2026</p>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+<div>
+
+<!-- Grunddaten -->
+<div class="panel">
+  <div class="panel-title"><div class="icon">📅</div>Grunddaten</div>
+  <div class="panel-body">
+    <div class="basis-grid">
+      <div class="field">
+        <label>Geburtsjahr</label>
+        <input type="number" id="geburtsjahr" value="1955" min="1930" max="1990">
+      </div>
+      <div class="field">
+        <label>Veranlagungsjahr</label>
+        <input type="number" id="veranlagungsjahr" value="2025" min="2020" max="2030" onchange="renderAlle()">
+      </div>
+      <div class="field">
+        <label>Kirchensteuer</label>
+        <select id="kirche">
+          <option value="0">Keine</option>
+          <option value="8">8 % (Bayern, BW)</option>
+          <option value="9">9 % (andere Bundesländer)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Rentenarten -->
+<div class="panel">
+  <div class="panel-title"><div class="icon">📋</div>Rentenarten</div>
+  <div class="anzahl-row">
+    <label>Anzahl Renten:</label>
+    <input type="number" id="anzahl" value="1" min="1" max="10">
+    <button class="btn" onclick="setAnzahl()">Felder anzeigen</button>
+  </div>
+  <div style="height:14px"></div>
+  <div id="renten-container"></div>
+  <div style="height:4px"></div>
+</div>
+
+<!-- KV / PV -->
+<div class="panel">
+  <div class="panel-title"><div class="icon">🏥</div>Kranken- &amp; Pflegeversicherung</div>
+  <div class="panel-body">
+    <div class="kv-tabs">
+      <button class="kv-tab active" onclick="setKV('gkv',this)">GKV (gesetzlich)</button>
+      <button class="kv-tab" onclick="setKV('pkv',this)">PKV (privat)</button>
+      <button class="kv-tab" onclick="setKV('keine',this)">Keine</button>
+    </div>
+    <!-- GKV -->
+    <div id="kv-gkv">
+      <div class="field">
+        <label>Krankenkasse suchen (Zusatzbeitrag wird automatisch eingetragen)</label>
+        <div class="kk-wrap">
+          <div id="kk-sel" style="display:none" class="kk-sel">
+            <span class="kname" id="kk-name">–</span>
+            <span class="ksatz" id="kk-satz">–</span>
+            <span class="kclr" onclick="clearKK()">×</span>
+          </div>
+          <input type="text" id="kk-search" placeholder="z.B. TK, AOK Bayern, DAK …" oninput="searchKK(this.value)" autocomplete="off">
+          <div class="kk-dd" id="kk-dd"></div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>KV-Beitragssatz (allg.)</label>
+          <div class="wrap"><input type="number" id="kv_satz" value="14.6" step="0.1" min="0" max="20"><span class="sfx">%</span></div>
+        </div>
+        <div class="field">
+          <label>Zusatzbeitrag</label>
+          <div class="wrap"><input type="number" id="kv_zusatz" value="2.9" step="0.05" min="0" max="10"><span class="sfx">%</span></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-bottom:10px">Kassenwahl füllt den Zusatzbeitrag automatisch – kann danach manuell überschrieben werden.</div>
+      <div class="tog-row">
+        <label>Hälftige Tragung (Rentner zahlt ~50 % von KV + Zusatzbeitrag)</label>
+        <label class="tog"><input type="checkbox" id="kv_half" checked><span class="sl"></span></label>
+      </div>
+      <div class="field" style="margin-top:11px">
+        <label>Pflegeversicherung Gesamtsatz</label>
+        <div class="wrap"><input type="number" id="pv_satz" value="3.6" step="0.05" min="0" max="10"><span class="sfx">%</span></div>
+      </div>
+    </div>
+    <!-- PKV -->
+    <div id="kv-pkv" style="display:none">
+      <div class="field-row">
+        <div class="field">
+          <label>PKV-Beitrag monatlich</label>
+          <div class="wrap"><input type="number" id="pkv_m" value="400" step="10" min="0"><span class="sfx">€</span></div>
+        </div>
+        <div class="field">
+          <label>PPV-Beitrag monatlich</label>
+          <div class="wrap"><input type="number" id="ppv_m" value="80" step="10" min="0"><span class="sfx">€</span></div>
+        </div>
+      </div>
+      <div class="tog-row">
+        <label>PKV/PPV-Beiträge als Sonderausgaben (steuermindernd)</label>
+        <label class="tog"><input type="checkbox" id="pkv_sa" checked><span class="sl"></span></label>
+      </div>
+    </div>
+    <!-- Keine -->
+    <div id="kv-keine" style="display:none">
+      <p style="font-size:13px;color:var(--text-light);padding:3px 0">Keine KV/PV-Abzüge berücksichtigt.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /left col -->
+
+<!-- Sidebar -->
+<div>
+  <div class="erg-panel">
+    <div class="erg-head"><h2>Ergebnis</h2><p>Jahresbasis · Näherungswerte</p></div>
+    <div class="erg-body">
+      <div class="res-blk">
+        <div class="lb">Brutto-Gesamtrente p.a.</div>
+        <div class="am" id="r-brutto">–</div>
+        <div class="sb" id="r-brutto-m">– / Monat</div>
+      </div>
+      <div class="abz-list">
+        <div id="r-stpfl-detail"></div>
+        <div class="abz" style="font-weight:700"><span class="n">Steuerpflichtiger Anteil gesamt</span><span class="v" id="r-stpfl">–</span></div>
+        <div class="abz sub"><span class="n">– WK-Pauschale / WK</span><span class="v" id="r-wk">102 €</span></div>
+        <div class="abz sub"><span class="n">– KV/PV (Sonderausgabe)</span><span class="v" id="r-kvsa">–</span></div>
+        <div class="abz"><span class="n">Zu versteuerndes Einkommen</span><span class="v" id="r-zve">–</span></div>
+        <hr class="dv">
+        <div class="abz"><span class="n">Einkommensteuer</span><span class="v" id="r-est">–</span></div>
+        <div class="abz sub"><span class="n">davon Solidaritätszuschlag</span><span class="v" id="r-soli">–</span></div>
+        <div class="abz sub"><span class="n">davon Kirchensteuer</span><span class="v" id="r-kist">–</span></div>
+        <div class="abz"><span class="n">KV + PV (Rentneranteil)</span><span class="v" id="r-kv">–</span></div>
+      </div>
+      <div class="res-blk netto">
+        <div class="lb">Netto-Rente p.a.</div>
+        <div class="am" id="r-netto">–</div>
+        <div class="sb" id="r-netto-m">– / Monat</div>
+      </div>
+      <div class="erg-info" id="r-info">Bitte Daten eingeben und „Berechnen" klicken.</div>
+      <button class="calc-btn" onclick="try{berechnen()}catch(e){document.getElementById('r-info').innerHTML='<strong style=color:red>FEHLER: '+e.message+'</strong><br>'+e.stack.split('\\n').slice(0,3).join('<br>')}">🔢 Berechnen</button>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /layout -->
+
+<script>
+
+// ============================================================
+// CHF-Wechselkurse (amtliche Jahresdurchschnittskurse, Anlage N-Gre)
+// Quelle: Finanzämter BW / BMF-Schreiben
+// ============================================================
+const CHF_KURSE = {
+  2019: 0.900, 2020: 0.930, 2021: 0.920, 2022: 0.990,
+  2023: 1.025, 2024: 1.045, 2025: 1.065
+};
+// Tageskurs 2026 (kein amtlicher Jahreskurs verfügbar, Stand 04.03.2026)
+const CHF_TAGESKURS_2026 = 1.1027;
+const CHF_TAGESKURS_DATUM = '04.03.2026';
+
+function getChfKurs(vj) {
+  if (CHF_KURSE[vj]) return { kurs: CHF_KURSE[vj], amtlich: true, jahr: vj };
+  // Kein amtlicher Jahreskurs → Tageskurs verwenden
+  return { kurs: CHF_TAGESKURS_2026, amtlich: false, datum: CHF_TAGESKURS_DATUM };
+}
+
+function chfToEur(chfJahr, vj) {
+  const k = getChfKurs(vj);
+  return { eur: chfJahr * k.kurs, kursInfo: k };
+}
+
+// ============================================================
+// Krankenkassen (Stand 2025/2026, bundesweit + große regionale KKen)
+// ============================================================
+const KK = [
+  {n:'AOK Baden-Württemberg',z:2.99},{n:'AOK Bayern',z:2.69},{n:'AOK Bremen/Bremerhaven',z:3.29},
+  {n:'AOK Hessen',z:2.98},{n:'AOK Niedersachsen',z:3.40},{n:'AOK NordWest',z:3.39},
+  {n:'AOK Nordost',z:2.70},{n:'AOK PLUS (Sachsen/Thüringen)',z:2.70},
+  {n:'AOK Rheinland-Pfalz/Saarland',z:2.47},{n:'AOK Rheinland/Hamburg',z:3.48},
+  {n:'AOK Sachsen-Anhalt',z:3.10},{n:'Audi BKK',z:2.60},{n:'Barmer',z:3.18},
+  {n:'BIG direkt gesund',z:3.17},{n:'BKK 24',z:4.39},{n:'BKK B. Braun Aesculap',z:2.99},
+  {n:'BKK Firmus',z:2.18},{n:'BKK Freudenberg',z:2.99},
+  {n:'BKK GILDEMEISTER SEIDENSTICKER',z:3.40},{n:'BKK Linde',z:2.99},
+  {n:'BKK melitta hmr',z:3.90},{n:'BKK mkk',z:3.50},{n:'BKK Pfalz',z:3.90},
+  {n:'BKK ProVita',z:3.79},{n:'BKK Public',z:2.50},{n:'BKK SBH',z:2.79},
+  {n:'BKK Technoform',z:3.49},{n:'BKK VDN',z:3.19},{n:'BKK VerbundPlus',z:3.89},
+  {n:'BKK WERRA-MEISSNER',z:4.35},{n:'BKK Wirtschaft & Finanzen',z:3.99},
+  {n:'Bosch BKK',z:3.18},{n:'Continentale BKK',z:3.33},{n:'DAK-Gesundheit',z:3.20},
+  {n:'Debeka BKK',z:3.25},{n:'energie-BKK',z:3.98},{n:'Heimat Krankenkasse',z:3.90},
+  {n:'hkk',z:2.59},{n:'IKK Brandenburg u. Berlin',z:2.99},{n:'IKK classic',z:2.99},
+  {n:'IKK gesund plus',z:3.40},{n:'IKK Südwest',z:2.99},
+  {n:'Kaufmännische KKH',z:3.28},{n:'Knappschaft',z:3.10},
+  {n:'Metzinger BKK',z:2.78},{n:'Novitas BKK',z:3.99},{n:'R+V BKK',z:2.99},
+  {n:'Salus BKK',z:3.99},{n:'SBK (Siemens)',z:3.18},
+  {n:'Techniker Krankenkasse (TK)',z:2.69},{n:'TUI BKK',z:2.50},
+  {n:'Vivida BKK',z:3.39},{n:'WMF BKK',z:2.78},
+].sort((a,b)=>a.n.localeCompare(b.n));
+
+// Besteuerungsanteil-Tabelle
+const BST={2005:50,2006:52,2007:54,2008:56,2009:58,2010:60,2011:62,2012:64,
+  2013:66,2014:68,2015:70,2016:72,2017:74,2018:76,2019:78,2020:80,
+  2021:81,2022:82,2023:82.5,2024:83,2025:83.5,2026:84,2027:84.5,
+  2028:85,2029:85.5,2030:86,2031:86.5,2032:87,2033:87.5,2034:88,
+  2035:88.5,2036:89,2037:89.5,2038:90,2039:90.5,2040:91,2041:91.5,
+  2042:92,2043:92.5,2044:93,2045:93.5,2046:94,2047:94.5,2048:95,
+  2049:95.5,2050:96,2051:96.5,2052:97,2053:97.5,2054:98,2055:98.5,
+  2056:99,2057:99.5,2058:100};
+function getBST(j){
+  if(!j||j<2005)return 50;if(j>=2058)return 100;
+  const ks=Object.keys(BST).map(Number);
+  return BST[ks.reduce((p,c)=>Math.abs(c-j)<Math.abs(p-j)?c:p)];
+}
+
+// Ertragsanteil nach Alter bei Rentenbeginn
+const EA_TAB=[
+  [100,59],[95,58],[90,57],[85,56],[80,55],[75,54],[70,52],[65,50],
+  [60,48],[55,46],[50,44],[47,43],[44,41],[41,40],[38,39],[35,37],
+  [32,36],[29,34],[26,32],[23,30],[0,28]
+];
+function getEA(alter){
+  const a=Math.max(0,Math.min(100,Math.round(alter)));
+  for(const[min,ea]of EA_TAB)if(a>=min)return ea;
+  return 1;
+}
+
+// Versorgungsfreibetrag
+const VFB_TAB={2005:40,2006:38.4,2007:36.8,2008:35.2,2009:33.6,2010:32,
+  2011:30.4,2012:28.8,2013:27.2,2014:25.6,2015:24,2016:22.4,2017:20.8,
+  2018:19.2,2019:17.6,2020:16,2021:15.2,2022:14.4,2023:13.6,2024:12.8,
+  2025:12,2026:11.2,2027:10.4,2028:9.6,2029:8.8,2030:8,2031:7.2,2032:6.4,
+  2033:5.6,2034:4.8,2035:4,2036:3.2,2037:2.4,2038:1.6,2039:0.8,2040:0};
+function getVFB(j){
+  const ks=Object.keys(VFB_TAB).map(Number);
+  return VFB_TAB[ks.reduce((p,c)=>Math.abs(c-j)<Math.abs(p-j)?c:p)]??0;
+}
+
+// State
+let kvMode='gkv';
+let rentenState=[];
+
+// Typen
+const TYPEN={
+  drv:{l:'Deutsche Rentenversicherung (DRV)',f:'#2c5f4e'},
+  basis:{l:'Basis-Rente (Rürup)',f:'#2c5f4e'},
+  avv:{l:'Altersvorsorgevertrag (Riester)',f:'#8b4513'},
+  direkt:{l:'Direktversicherung',f:'#4a3f6b'},
+  betrieb:{l:'Betriebliche Rente (bAV)',f:'#4a3f6b'},
+  ahv:{l:'AHV-Rente Schweiz',f:'#c0392b'},
+  pk_ob:{l:'PK Schweiz – obligatorisch',f:'#c0392b'},
+  pk_ueb:{l:'PK Schweiz – überobligatorisch',f:'#c0392b'},
+  sonstige:{l:'Sonstige Rente',f:'#5a6b7a'},
+};
+
+// ============================================================
+// KK-Suche
+// ============================================================
+function searchKK(q){
+  const dd=document.getElementById('kk-dd');
+  if(!q){dd.style.display='none';return;}
+  const hits=KK.filter(k=>k.n.toLowerCase().includes(q.toLowerCase())).slice(0,12);
+  if(!hits.length){dd.style.display='none';return;}
+  dd.innerHTML=hits.map(k=>`<div class="kk-it" onclick="selectKK('${k.n.replace(/'/g,"\\'")}',${k.z})"><span class="kn">${k.n}</span><span class="ks">${k.z.toFixed(2)} %</span></div>`).join('');
+  dd.style.display='block';
+}
+function selectKK(n,z){
+  document.getElementById('kk-search').value='';
+  document.getElementById('kk-dd').style.display='none';
+  document.getElementById('kk-sel').style.display='flex';
+  document.getElementById('kk-name').textContent=n;
+  document.getElementById('kk-satz').textContent=z.toFixed(2)+' %';
+  document.getElementById('kv_zusatz').value=z.toFixed(2);
+}
+function clearKK(){
+  document.getElementById('kk-sel').style.display='none';
+  document.getElementById('kk-search').value='';
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.kk-wrap'))document.getElementById('kk-dd').style.display='none';
+});
+
+// ============================================================
+// KV-Modus
+// ============================================================
+function setKV(mode,btn){
+  kvMode=mode;
+  document.querySelectorAll('.kv-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['gkv','pkv','keine'].forEach(m=>document.getElementById('kv-'+m).style.display=m===mode?'':'none');
+}
+
+// ============================================================
+// Renten rendern
+// ============================================================
+function setAnzahl(){
+  const n=Math.max(1,Math.min(10,parseInt(document.getElementById('anzahl').value)||1));
+  while(rentenState.length<n)rentenState.push({typ:'drv',data:{}});
+  rentenState=rentenState.slice(0,n);
+  renderAlle();
+}
+
+function renderAlle(){
+  const c=document.getElementById('renten-container');
+  c.innerHTML='';
+  rentenState.forEach((r,i)=>c.appendChild(buildEintrag(r,i)));
+}
+
+function buildEintrag(r,idx){
+  const gb=parseInt(document.getElementById('geburtsjahr').value)||1955;
+  const vj=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+  const wrap=document.createElement('div');
+  wrap.className='rente-entry';
+
+  const opts=Object.entries(TYPEN).map(([v,t])=>`<option value="${v}"${v===r.typ?' selected':''}>${t.l}</option>`).join('');
+  const farbe=TYPEN[r.typ]?.f||'#555';
+
+  // Betragfelder
+  const monatVal=r.data.monat!=null?r.data.monat:'';
+  const jahrVal=r.data.jahr!=null?r.data.jahr:'';
+
+  let extra=buildExtra(r,idx,gb,vj);
+
+  wrap.innerHTML=`
+    <div class="rente-head">
+      <div class="rente-nr">${idx+1}</div>
+      <select class="rente-typ" style="border-left:3px solid ${farbe}" onchange="changeTyp(${idx},this.value)">${opts}</select>
+    </div>
+    <div class="betrag-row">
+      <div class="field">
+        <label id="r${idx}_lbl_m">Monatsbetrag</label>
+        <div class="wrap"><input type="number" id="r${idx}_m" value="${monatVal}" min="0" step="10" placeholder="0,00" oninput="syncM(${idx},this.value)"></div>
+      </div>
+      <div class="arrow">⇄</div>
+      <div class="field">
+        <label id="r${idx}_lbl_j">Jahresbetrag</label>
+        <div class="wrap"><input type="number" id="r${idx}_j" value="${jahrVal}" min="0" step="100" placeholder="0,00" oninput="syncJ(${idx},this.value)"></div>
+      </div>
+    </div>
+    <div id="r${idx}_extra">${extra}</div>`;
+  return wrap;
+}
+
+function buildExtra(r,idx,gb,vj){
+  const typ=r.typ;
+  const rb=r.data.rb||vj;
+  const alter=rb-gb;
+
+  if(['drv','basis'].includes(typ)){
+    const bst=getBST(rb);
+    return `<div class="field" style="margin-top:10px">
+      <label>Rentenbeginn-Jahr</label>
+      <input type="number" value="${rb}" min="1960" max="2058"
+        oninput="setD(${idx},'rb',+this.value);setBST(${idx})">
+    </div>
+    <div class="bst-box" id="r${idx}_hint">Besteuerungsanteil: <strong>${bst} %</strong></div>`;
+  }
+
+  if(['ahv','pk_ob'].includes(typ)){
+    const bst=getBST(rb);
+    const chfMode=r.data.chfMode||'chf';
+    const vj2=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+    const kInfo=getChfKurs(vj2);
+    const kursLabel=kInfo.amtlich
+      ? `Amtl. Kurs ${kInfo.jahr}: 100 CHF = ${(kInfo.kurs*100).toFixed(2)} €`
+      : `Tageskurs (${kInfo.datum}): 1 CHF = ${kInfo.kurs.toFixed(4)} €`;
+    return `<div class="field" style="margin-top:10px">
+      <label>Rentenbeginn-Jahr</label>
+      <input type="number" value="${rb}" min="1960" max="2058"
+        oninput="setD(${idx},'rb',+this.value);setBST(${idx})">
+    </div>
+    <div class="bst-box" id="r${idx}_hint">Besteuerungsanteil: <strong>${bst} %</strong></div>
+    <div class="field" style="margin-top:10px">
+      <label>Währung</label>
+      <div class="cur-toggle">
+        <button class="cur-btn${chfMode==='eur'?' active':''}" onclick="setCurMode(${idx},'eur',this)">€ EUR</button>
+        <button class="cur-btn chf-btn${chfMode==='chf'?' active chf-active':''}" onclick="setCurMode(${idx},'chf',this)">🇨🇭 CHF</button>
+      </div>
+      <div id="r${idx}_chf_info" class="chf-kurs-info" style="display:${chfMode==='chf'?'block':'none'}">${kursLabel}</div>
+    </div>`;
+  }
+
+  if(typ==='pk_ueb'){
+    const ea=r.data.ea!=null?r.data.ea:getEA(alter);
+    const chfMode=r.data.chfMode||'chf';
+    const vj2=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+    const kInfo=getChfKurs(vj2);
+    const kursLabel=kInfo.amtlich
+      ? `Amtl. Kurs ${kInfo.jahr}: 100 CHF = ${(kInfo.kurs*100).toFixed(2)} €`
+      : `Tageskurs (${kInfo.datum}): 1 CHF = ${kInfo.kurs.toFixed(4)} €`;
+    return `<div class="field-row" style="margin-top:10px">
+      <div class="field">
+        <label>Rentenbeginn-Jahr</label>
+        <input type="number" value="${rb}" min="1960" max="2058"
+          oninput="setD(${idx},'rb',+this.value);setEA(${idx})">
+      </div>
+      <div class="field">
+        <label>Ertragsanteil</label>
+        <div class="wrap"><input type="number" id="r${idx}_ea" value="${ea}" min="0" max="60" step="0.5"
+          oninput="setD(${idx},'ea',+this.value)"><span class="sfx">%</span></div>
+      </div>
+    </div>
+    <div class="bst-box" id="r${idx}_hint">Alter bei Rentenbeginn: <strong>${alter} J.</strong> → Auto-Ertragsanteil: <strong>${getEA(alter)} %</strong></div>
+    <div class="field" style="margin-top:10px">
+      <label>Währung</label>
+      <div class="cur-toggle">
+        <button class="cur-btn${chfMode==='eur'?' active':''}" onclick="setCurMode(${idx},'eur',this)">€ EUR</button>
+        <button class="cur-btn chf-btn${chfMode==='chf'?' active chf-active':''}" onclick="setCurMode(${idx},'chf',this)">🇨🇭 CHF</button>
+      </div>
+      <div id="r${idx}_chf_info" class="chf-kurs-info" style="display:${chfMode==='chf'?'block':'none'}">${kursLabel}</div>
+    </div>`;
+  }
+
+
+
+  if(typ==='avv'){
+    const gef=r.data.gef??100;
+    return `<div class="field" style="margin-top:10px">
+      <label>Geförderter Anteil</label>
+      <div class="wrap"><input type="number" value="${gef}" min="0" max="100"
+        oninput="setD(${idx},'gef',+this.value)"><span class="sfx">%</span></div>
+    </div>
+    <div class="bst-box">Geförderter Anteil: voll steuerpflichtig · Rest: Ertragsanteil</div>`;
+  }
+
+  if(typ==='direkt'){
+    const dt=r.data.dt||'voll';
+    return `<div class="field" style="margin-top:10px">
+      <label>Vertragstyp</label>
+      <select onchange="setD(${idx},'dt',this.value)">
+        <option value="voll"${dt==='voll'?' selected':''}>Neuvertrag § 3 Nr. 63 – voll steuerpflichtig</option>
+        <option value="pauschal"${dt==='pauschal'?' selected':''}>Altvertrag § 40b – pauschal (kein Abzug)</option>
+      </select>
+    </div>`;
+  }
+
+  if(typ==='betrieb'){
+    const rj=r.data.rj||vj;
+    const vfb=getVFB(rj);
+    return `<div class="field" style="margin-top:10px">
+      <label>Ruhestandsjahr (für Versorgungsfreibetrag)</label>
+      <input type="number" value="${rj}" min="2005" max="2040"
+        oninput="setD(${idx},'rj',+this.value);setVFB(${idx})">
+    </div>
+    <div class="bst-box" id="r${idx}_hint">Versorgungsfreibetrag: <strong>${vfb.toFixed(1)} %</strong></div>`;
+  }
+
+  if(typ==='sonstige'){
+    const art=r.data.art||'besteuerungsanteil';
+    return `<div style="margin-top:10px">
+      <label style="font-size:11px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.4px">Besteuerungsart</label>
+      <div class="s-tabs">
+        <button class="s-tab${art==='besteuerungsanteil'?' active':''}" onclick="setSArt(${idx},'besteuerungsanteil',this)">Besteuerungsanteil</button>
+        <button class="s-tab${art==='ertragsanteil'?' active':''}" onclick="setSArt(${idx},'ertragsanteil',this)">Ertragsanteil</button>
+        <button class="s-tab${art==='voll'?' active':''}" onclick="setSArt(${idx},'voll',this)">Voll stpfl.</button>
+      </div>
+      <div id="r${idx}_sext">${buildSExt(idx,r,gb,vj)}</div>
+    </div>`;
+  }
+  return '';
+}
+
+function buildSExt(idx,r,gb,vj){
+  const art=r.data.art||'besteuerungsanteil';
+  const rb=r.data.rb||vj;
+  const alter=rb-gb;
+  if(art==='besteuerungsanteil'){
+    const bst=getBST(rb);
+    return `<div class="field"><label>Rentenbeginn-Jahr</label>
+      <input type="number" value="${rb}" min="1960" max="2058" oninput="setD(${idx},'rb',+this.value);setBST(${idx})">
+    </div><div class="bst-box" id="r${idx}_hint">Besteuerungsanteil: <strong>${bst} %</strong></div>`;
+  }
+  if(art==='ertragsanteil'){
+    const ea=r.data.ea!=null?r.data.ea:getEA(alter);
+    return `<div class="field-row">
+      <div class="field"><label>Rentenbeginn-Jahr</label>
+        <input type="number" value="${rb}" min="1960" max="2058" oninput="setD(${idx},'rb',+this.value);setEA(${idx})">
+      </div>
+      <div class="field"><label>Ertragsanteil</label>
+        <div class="wrap"><input type="number" id="r${idx}_ea" value="${ea}" min="0" max="60" step="0.5" oninput="setD(${idx},'ea',+this.value)"><span class="sfx">%</span></div>
+      </div>
+    </div>
+    <div class="bst-box" id="r${idx}_hint">Alter: <strong>${alter} J.</strong> → Auto-Ertragsanteil: <strong>${getEA(alter)} %</strong></div>`;
+  }
+  return '<div class="bst-box">Gesamter Betrag ist steuerpflichtig.</div>';
+}
+
+// ============================================================
+// Event-Helpers
+// ============================================================
+function syncM(idx,v){
+  const val=parseFloat(v)||0;
+  rentenState[idx].data.monat=val;
+  rentenState[idx].data.jahr=val*12;
+  const el=document.getElementById(`r${idx}_j`);
+  if(el)el.value=val?(val*12).toFixed(2):'';
+}
+function syncJ(idx,v){
+  const val=parseFloat(v)||0;
+  rentenState[idx].data.jahr=val;
+  rentenState[idx].data.monat=val/12;
+  const el=document.getElementById(`r${idx}_m`);
+  if(el)el.value=val?(val/12).toFixed(2):'';
+}
+function changeTyp(idx,typ){
+  const d=rentenState[idx].data;
+  rentenState[idx]={typ,data:{monat:d.monat,jahr:d.jahr}};
+  renderAlle();
+}
+function setD(idx,k,v){rentenState[idx].data[k]=v;}
+
+function setBST(idx){
+  const r=rentenState[idx];
+  const vj=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+  const rb=r.data.rb||vj;
+  const el=document.getElementById(`r${idx}_hint`);
+  if(el)el.innerHTML=`Besteuerungsanteil: <strong>${getBST(rb)} %</strong>`;
+}
+function setEA(idx){
+  const r=rentenState[idx];
+  const gb=parseInt(document.getElementById('geburtsjahr').value)||1955;
+  const vj=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+  const rb=r.data.rb||vj;
+  const alter=rb-gb;
+  const ea=getEA(alter);
+  if(r.data.ea==null){
+    r.data.ea=ea;
+    const inp=document.getElementById(`r${idx}_ea`);
+    if(inp)inp.value=ea;
+  }
+  const el=document.getElementById(`r${idx}_hint`);
+  if(el)el.innerHTML=`Alter: <strong>${alter} J.</strong> → Auto-Ertragsanteil: <strong>${ea} %</strong>`;
+}
+function setVFB(idx){
+  const r=rentenState[idx];
+  const vj=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+  const rj=r.data.rj||vj;
+  const el=document.getElementById(`r${idx}_hint`);
+  if(el)el.innerHTML=`Versorgungsfreibetrag: <strong>${getVFB(rj).toFixed(1)} %</strong>`;
+}
+function setCurMode(idx,mode,btn){
+  rentenState[idx].data.chfMode=mode;
+  btn.closest('.cur-toggle').querySelectorAll('.cur-btn').forEach(b=>{b.classList.remove('active');b.classList.remove('chf-active');});
+  btn.classList.add('active');
+  if(mode==='chf') btn.classList.add('chf-active');
+  const info=document.getElementById(`r${idx}_chf_info`);
+  if(info)info.style.display=mode==='chf'?'block':'none';
+  // Suffix im Betrag-Input aktualisieren
+  const sfxEls=document.querySelectorAll(`#r${idx}_m`);
+  // Labels aktualisieren
+  const lm=document.getElementById(`r${idx}_lbl_m`);
+  const lj=document.getElementById(`r${idx}_lbl_j`);
+  if(lm)lm.textContent=mode==='chf'?'Monatsbetrag (CHF)':'Monatsbetrag';
+  if(lj)lj.textContent=mode==='chf'?'Jahresbetrag (CHF)':'Jahresbetrag';
+}
+
+function setSArt(idx,art,btn){
+  rentenState[idx].data.art=art;
+  btn.closest('.s-tabs').querySelectorAll('.s-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const gb=parseInt(document.getElementById('geburtsjahr').value)||1955;
+  const vj=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+  const el=document.getElementById(`r${idx}_sext`);
+  if(el)el.innerHTML=buildSExt(idx,rentenState[idx],gb,vj);
+}
+
+// ============================================================
+// Steuerberechnung (Tarif 2025)
+// ============================================================
+function estGrund(zve){
+  zve=Math.floor(zve);
+  if(zve<=12084)return 0;
+  if(zve<=17430){const y=(zve-12084)/10000;return Math.floor((922.98*y+1400)*y);}
+  if(zve<=68430){const z=(zve-17430)/10000;return Math.floor((181.19*z+2397)*z+1056.41);}
+  if(zve<=277825)return Math.floor(0.42*zve-10907.08);
+  return Math.floor(0.45*zve-19239.58);
+}
+function estSplitting(zve){return estGrund(Math.floor(zve/2))*2;}
+function berechneSt(zve,sk){
+  if(sk==3)return estSplitting(zve);
+  if(sk==5||sk==6)return Math.floor(zve*0.42);
+  return estGrund(zve);
+}
+
+// ============================================================
+// Hauptberechnung
+// ============================================================
+function berechnen(){
+  const gb=parseInt(document.getElementById('geburtsjahr').value)||1955;
+  const vj=parseInt(document.getElementById('veranlagungsjahr').value)||2025;
+  const sk=1;
+  const kircheSatz=parseInt(document.getElementById('kirche').value);
+  const wk=102;
+
+  let brutto=0, stpfl=0;
+  const infoLines=[];
+  const detailLines=[];
+
+  rentenState.forEach((r,idx)=>{
+    // Beträge direkt aus DOM lesen
+    const mEl=document.getElementById(`r${idx}_m`);
+    const jEl=document.getElementById(`r${idx}_j`);
+    const mVal=mEl?parseFloat(mEl.value)||0:0;
+    const jVal=jEl?parseFloat(jEl.value)||0:0;
+    let betragRaw=jVal||mVal*12;
+    if(!betragRaw)return;
+
+    // CHF → EUR umrechnen (nur bei Schweizer Renten)
+    const chfMode=r.data.chfMode||'chf';
+    let betrag=betragRaw;
+    let kursHinweis='';
+    if(chfMode==='chf'&&['ahv','pk_ob','pk_ueb'].includes(r.typ)){
+      const kInfo=getChfKurs(vj);
+      betrag=betragRaw*kInfo.kurs;
+      kursHinweis=kInfo.amtlich
+        ?`Amtl. Kurs ${kInfo.jahr}: 100 CHF = ${(kInfo.kurs*100).toFixed(2)} €`
+        :`Tageskurs (${kInfo.datum}): 1 CHF = ${kInfo.kurs.toFixed(4)} €`;
+    }
+
+    brutto+=betrag;
+    const rb=r.data.rb||vj;
+    const alter=rb-gb;
+    let s=0, lbl='', pctLabel='';
+
+    if(['drv','basis','ahv','pk_ob'].includes(r.typ)){
+      const bst=getBST(rb);
+      s=betrag*bst/100;
+      lbl=`${TYPEN[r.typ].l}: ${bst}% Besteuerungsanteil`;
+      pctLabel=`${bst}%`;
+    } else if(r.typ==='pk_ueb'){
+      const eaEl=document.getElementById(`r${idx}_ea`);
+      const ea=eaEl?parseFloat(eaEl.value)||getEA(alter):(r.data.ea!=null?r.data.ea:getEA(alter));
+      s=betrag*ea/100;
+      lbl=`PK überobligatorisch: ${ea}% Ertragsanteil`;
+      pctLabel=`${ea}%`;
+    } else if(r.typ==='avv'){
+      const gef=r.data.gef??100;
+      const ea=getEA(alter);
+      s=betrag*gef/100+betrag*(1-gef/100)*ea/100;
+      lbl=`Riester: ${gef}% voll + ${(100-gef).toFixed(0)}% Ertragsanteil (${ea}%)`;
+      pctLabel=`${gef}%+EA`;
+    } else if(r.typ==='direkt'){
+      if(r.data.dt==='pauschal'){s=0;lbl='Direktversicherung: Altvertrag §40b (kein Abzug)';pctLabel='0%';}
+      else{s=betrag;lbl='Direktversicherung: voll steuerpflichtig';pctLabel='100%';}
+    } else if(r.typ==='betrieb'){
+      const rj=r.data.rj||vj;
+      const vfbPct=getVFB(rj);
+      const vfb=betrag*vfbPct/100;
+      s=betrag-vfb;
+      lbl=`Betriebliche Rente: VFB ${vfbPct.toFixed(1)}% = ${fmt(vfb)} abzugsfähig`;
+      pctLabel=`${(100-vfbPct).toFixed(1)}%`;
+    } else if(r.typ==='sonstige'){
+      const art=r.data.art||'besteuerungsanteil';
+      if(art==='besteuerungsanteil'){
+        const bst=getBST(rb);s=betrag*bst/100;
+        lbl=`Sonstige: ${bst}% Besteuerungsanteil`;pctLabel=`${bst}%`;
+      } else if(art==='ertragsanteil'){
+        const eaEl2=document.getElementById(`r${idx}_ea`);
+        const ea=eaEl2?parseFloat(eaEl2.value)||getEA(alter):(r.data.ea!=null?r.data.ea:getEA(alter));
+        s=betrag*ea/100;lbl=`Sonstige: ${ea}% Ertragsanteil`;pctLabel=`${ea}%`;
+      } else {
+        s=betrag;lbl='Sonstige: voll steuerpflichtig';pctLabel='100%';
+      }
+    }
+
+    const sFloor=Math.floor(s);
+    stpfl+=sFloor;
+    if(lbl){
+      infoLines.push(lbl);
+      detailLines.push({
+        label: TYPEN[r.typ]?.l||r.typ,
+        brutto: betrag,
+        bruttoRaw: betragRaw,
+        chfMode: chfMode,
+        kursHinweis: kursHinweis,
+        stpfl: sFloor,
+        pctLabel: pctLabel
+      });
+    }
+  });
+
+  // KV/PV
+  let kv_netto=0, kv_sa=0;
+  const bbg=66150;
+  if(kvMode==='gkv'){
+    const kvS=(parseFloat(document.getElementById('kv_satz').value)||14.6)
+             +(parseFloat(document.getElementById('kv_zusatz').value)||2.9);
+    const pvS=parseFloat(document.getElementById('pv_satz').value)||3.6;
+    const basis=Math.min(brutto,bbg);
+    const half=document.getElementById('kv_half').checked;
+    kv_netto=half?(basis*kvS/100/2+basis*pvS/100/2):(basis*(kvS+pvS)/100);
+    kv_sa=Math.ceil(kv_netto);
+  } else if(kvMode==='pkv'){
+    kv_netto=((parseFloat(document.getElementById('pkv_m').value)||0)
+             +(parseFloat(document.getElementById('ppv_m').value)||0))*12;
+    kv_sa=document.getElementById('pkv_sa').checked?Math.ceil(kv_netto):0;
+  }
+
+  const zve=Math.max(0, stpfl-wk-kv_sa);
+  const est=berechneSt(zve,sk);
+  let soli=0;
+  if(est>19950){soli=Math.min(est*0.055,(est-19950)*0.119);soli=Math.max(0,Math.floor(soli));}
+  const kist=Math.floor(est*kircheSatz/100);
+  const steuer=est+soli+kist;
+  const netto=brutto-steuer-kv_netto;
+  const eff=brutto>0?((steuer+kv_netto)/brutto*100).toFixed(1):0;
+
+  // Detail-Zeilen steuerpflichtiger Anteil rendern
+  const detailHtml=detailLines.map(d=>{
+    let chfPart='';
+    if(d.chfMode==='chf'&&d.kursHinweis){
+      chfPart=`<br><span style="font-size:10px;opacity:.65">${fmtCHF(d.bruttoRaw)} · ${d.kursHinweis}</span>`;
+    }
+    return `<div class="abz detail">
+      <span class="n">${d.label}${chfPart}</span>
+      <span style="white-space:nowrap"><span class="v">${fmt(d.brutto)}</span><span style="opacity:.45;font-size:10px"> ×${d.pctLabel}</span> = <span class="vv">${fmt(d.stpfl)}</span></span>
+    </div>`;
+  }).join('');
+  set('r-stpfl-detail', detailHtml);
+
+  set('r-brutto', fmt(brutto));
+  set('r-brutto-m', fmt(brutto/12)+' / Monat');
+  set('r-stpfl', fmt(stpfl));
+  set('r-wk', wk.toFixed(0)+' €');
+  set('r-kvsa', fmt(kv_sa));
+  set('r-zve', fmt(zve));
+  set('r-est', fmt(est));
+  set('r-soli', fmt(soli));
+  set('r-kist', fmt(kist));
+  set('r-kv', fmt(kv_netto));
+  set('r-netto', fmt(netto));
+  set('r-netto-m', fmt(netto/12)+' / Monat');
+  set('r-info', `<strong>Effektive Gesamtbelastung: ${eff}%</strong><br>`+
+    (infoLines.length?infoLines.map(l=>`· ${l}`).join('<br>'):'Keine Renten eingetragen.'));
+}
+
+function set(id,html){const e=document.getElementById(id);if(e)e.innerHTML=html;}
+function fmt(v){if(isNaN(v))return'0,00 €';return v.toLocaleString('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:2});}
+function fmtCHF(v){if(isNaN(v))return'0.00';return v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' CHF';}
+
+// Init
+window.onload=()=>{
+  rentenState=[{typ:'drv',data:{}}];
+  document.getElementById('anzahl').value=1;
+  renderAlle();
+};
+</script>
+</body>
+</html>
