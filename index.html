@@ -73,7 +73,7 @@ body::before{
 .theme-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
 /* Header */
-header{text-align:center;margin-bottom:40px;}
+header{text-align:center;margin-bottom:24px;}
 .badge{
   display:inline-block;font-family:'IBM Plex Mono',monospace;
   font-size:10px;letter-spacing:3px;text-transform:uppercase;
@@ -354,7 +354,6 @@ footer{
 <div class="container">
 
   <header>
-    <div class="badge">Rentenbesteuerung &middot; §§ 22, 19 EStG &middot; DBA CH-DE</div>
     <h1><span>Renten</span>-Netto</h1>
     <p class="subtitle">Alle Rentenarten &middot; Deutsche Einkommensteuer &middot; Stand 2025/2026</p>
   </header>
@@ -448,11 +447,11 @@ footer{
         <div class="field-row">
           <div class="field">
             <label>PKV monatlich</label>
-            <div class="wrap"><input type="number" id="pkv_m" value="400" step="10" min="0"><span class="sfx">€</span></div>
+            <div class="wrap"><input type="text" id="pkv_m" value="400" inputmode="decimal" onfocus="onMoneyFocus(this)" onblur="onMoneyBlur(this)"><span class="sfx">€</span></div>
           </div>
           <div class="field">
             <label>PPV monatlich</label>
-            <div class="wrap"><input type="number" id="ppv_m" value="80" step="10" min="0"><span class="sfx">€</span></div>
+            <div class="wrap"><input type="text" id="ppv_m" value="80" inputmode="decimal" onfocus="onMoneyFocus(this)" onblur="onMoneyBlur(this)"><span class="sfx">€</span></div>
           </div>
         </div>
         <label class="toggle-label">
@@ -538,7 +537,10 @@ footer{
   </div><!-- /layout -->
 </div><!-- /container -->
 
-<footer>&copy; 2025 Robin Glowania &middot; Kein Rechtsanspruch</footer>
+<div class="container" style="margin-top:8px;">
+  <p class="note" style="text-align:center;line-height:1.7;opacity:0.7;">Alle Berechnungen sind Näherungswerte auf Basis der jeweils angegebenen Rechtsgrundlagen. Individuelle Faktoren bleiben unberücksichtigt. Kein Ersatz für individuelle Steuer- oder Rechtsberatung · Alle Angaben ohne Gewähr</p>
+</div>
+<footer>&copy; Robin Glowania</footer>
 
 <script>
 // ── Theme ──────────────────────────────────────────────────────
@@ -722,8 +724,8 @@ function buildEintrag(r,idx){
   const wrap=document.createElement('div');
   wrap.className='rente-entry';
   const opts=Object.entries(TYPEN).map(([v,t])=>`<option value="${v}"${v===r.typ?' selected':''}>${t.l}</option>`).join('');
-  const monatVal=r.data.monat!=null?r.data.monat:'';
-  const jahrVal=r.data.jahr!=null?r.data.jahr:'';
+  const monatVal=r.data.monat!=null&&r.data.monat!==''?fmtInput(r.data.monat):'';
+  const jahrVal=r.data.jahr!=null&&r.data.jahr!==''?fmtInput(r.data.jahr):'';
   const extra=buildExtra(r,idx,gb,vj);
   wrap.innerHTML=`
     <div class="rente-head">
@@ -733,12 +735,12 @@ function buildEintrag(r,idx){
     <div class="betrag-row">
       <div class="field">
         <label id="r${idx}_lbl_m">Monatsbetrag</label>
-        <input type="number" id="r${idx}_m" value="${monatVal}" min="0" step="10" placeholder="0.00" oninput="syncM(${idx},this.value)">
+        <input type="text" id="r${idx}_m" value="${monatVal}" inputmode="decimal" placeholder="0" onfocus="onMoneyFocus(this)" onblur="onMoneyBlur(this)" oninput="syncM(${idx},this.value)">
       </div>
       <div class="betrag-arrow">⇄</div>
       <div class="field">
         <label id="r${idx}_lbl_j">Jahresbetrag</label>
-        <input type="number" id="r${idx}_j" value="${jahrVal}" min="0" step="100" placeholder="0.00" oninput="syncJ(${idx},this.value)">
+        <input type="text" id="r${idx}_j" value="${jahrVal}" inputmode="decimal" placeholder="0" onfocus="onMoneyFocus(this)" onblur="onMoneyBlur(this)" oninput="syncJ(${idx},this.value)">
       </div>
     </div>
     <div id="r${idx}_extra">${extra}</div>`;
@@ -881,18 +883,18 @@ function buildSExt(idx,r,gb,vj){
 
 // Event Helpers
 function syncM(idx,v){
-  const val=parseFloat(v)||0;
+  const val=parseDe(v);
   rentenState[idx].data.monat=val;
   rentenState[idx].data.jahr=val*12;
   const el=document.getElementById(`r${idx}_j`);
-  if(el)el.value=val?(val*12).toFixed(2):'';
+  if(el)el.value=val?fmtInput(val*12):'';
 }
 function syncJ(idx,v){
-  const val=parseFloat(v)||0;
+  const val=parseDe(v);
   rentenState[idx].data.jahr=val;
   rentenState[idx].data.monat=val/12;
   const el=document.getElementById(`r${idx}_m`);
-  if(el)el.value=val?(val/12).toFixed(2):'';
+  if(el)el.value=val?fmtInput(val/12):'';
 }
 function changeTyp(idx,typ){
   const d=rentenState[idx].data;
@@ -973,8 +975,8 @@ function berechnen(){
   rentenState.forEach((r,idx)=>{
     const mEl=document.getElementById(`r${idx}_m`);
     const jEl=document.getElementById(`r${idx}_j`);
-    const mVal=mEl?parseFloat(mEl.value)||0:0;
-    const jVal=jEl?parseFloat(jEl.value)||0:0;
+    const mVal=mEl?parseDe(mEl.value):0;
+    const jVal=jEl?parseDe(jEl.value):0;
     let betragRaw=jVal||mVal*12;
     if(!betragRaw)return;
 
@@ -1059,8 +1061,8 @@ function berechnen(){
     kv_netto=half?(basis*kvS/100/2+basis*pvS/100/2):(basis*(kvS+pvS)/100);
     kv_sa=Math.ceil(kv_netto);
   } else if(kvMode==='pkv'){
-    kv_netto=((parseFloat(document.getElementById('pkv_m').value)||0)
-             +(parseFloat(document.getElementById('ppv_m').value)||0))*12;
+    kv_netto=((parseDe(document.getElementById('pkv_m').value))
+             +(parseDe(document.getElementById('ppv_m').value)))*12;
     kv_sa=document.getElementById('pkv_sa').checked?Math.ceil(kv_netto):0;
   }
 
@@ -1105,6 +1107,25 @@ function berechnen(){
 function set(id,html){const e=document.getElementById(id);if(e)e.innerHTML=html;}
 function fmt(v){if(isNaN(v))return'0,00 €';return v.toLocaleString('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:2});}
 function fmtCHF(v){if(isNaN(v))return'0.00';return v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' CHF';}
+
+// ── Tausender-Format für Geldbeträge ──────────────────────────
+function parseDe(s){return parseFloat((s||'').replace(/\./g,'').replace(',','.'))||0;}
+function fmtInput(val){
+  if(!val&&val!==0)return'';
+  const n=parseFloat(val);
+  if(isNaN(n))return'';
+  return n.toLocaleString('de-DE',{minimumFractionDigits:0,maximumFractionDigits:2});
+}
+function onMoneyFocus(el){el.value=(el.value||'').replace(/\./g,'').replace(',','.');}
+function onMoneyBlur(el){
+  const v=parseDe(el.value);
+  el.value=v?fmtInput(v):'';
+}
+function onMoneyInput(el,cb){
+  // Erlaubt Tippen; cb wird mit dem rohen Float aufgerufen
+  const raw=parseDe(el.value);
+  if(cb)cb(raw);
+}
 
 // Init
 window.onload=()=>{
